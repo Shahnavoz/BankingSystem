@@ -1,11 +1,11 @@
 using System.Net;
+using System.Runtime.InteropServices;
 using BankSystemWebApi.Data;
 using BankSystemWebApi.Models.DTOs;
 using BankSystemWebApi.Models.Entities;
 using BankSystemWebApi.Services.Interfaces;
 using Dapper;
 using UploadUserAvatarWebApi.Responces;
-
 namespace BankSystemWebApi.Services;
 
 public class CustomerService(ApplicationDbContext context):ICustomerService
@@ -26,7 +26,6 @@ public class CustomerService(ApplicationDbContext context):ICustomerService
             throw;
         }
     }
-
     public async Task<Response<Customer>> GetCustomerByIdAsync(int id)
     {
         try
@@ -35,7 +34,7 @@ public class CustomerService(ApplicationDbContext context):ICustomerService
             conn.Open();
             string query = @"select * from customers where Id = @Id";
             var customer = await conn.QueryFirstOrDefaultAsync<Customer>(query, new { Id = id });
-            return customer==null ? new Response<Customer>(HttpStatusCode.InternalServerError, "An error occured")
+            return customer==null ? new Response<Customer>(HttpStatusCode.InternalServerError, "An error occured!!!")
                 : new Response<Customer>(HttpStatusCode.OK,"Found!", customer);
         }
         catch (Exception e)
@@ -52,13 +51,15 @@ public class CustomerService(ApplicationDbContext context):ICustomerService
             using var conn = context.GetConnection();
             conn.Open();
             var fullPath = await SaveFileAsync(customerDto.ProfilePicture);
+            Console.WriteLine(fullPath);
             
             var customerFile=new CustomerFile{
                 FileName=customerDto.ProfilePicture.FileName,
                 FileExtension=Path.GetExtension(customerDto.ProfilePicture.FileName),
                 FilePath=fullPath
                 };
-           const string insertFileQuery = "INSERT INTO customerfiles(FileName,FileExtension,FilePath) VALUES(@FileName,@FileExtension,@FilePath), returning Id";
+           const string insertFileQuery = @"INSERT INTO customerfiles(FileName,FileExtension,FilePath) VALUES(@FileName,@FileExtension,@FilePath)
+                                          returning id";
             
            var fileId = await conn.ExecuteScalarAsync<int>(insertFileQuery, customerFile);
            customerFile.Id = fileId;
@@ -72,19 +73,18 @@ public class CustomerService(ApplicationDbContext context):ICustomerService
 
            };
            
-           const string insertCustomerQuery=@"insert into customers(Name,Email,ProfilePictureId) 
-                                 values(@Name,@Email,@ProfilePictureId),returning Id";
+           const string insertCustomerQuery=@"insert into customers(Name,Email,PhoneNumber,ProfilePictureId) 
+                                 values(@Name,@Email,@PhoneNumber,@ProfilePictureId) returning Id";
            
-           var customerId = await conn.ExecuteAsync(insertCustomerQuery, customer);
+           var customerId = await conn.ExecuteScalarAsync<int>(insertCustomerQuery, customer);
            customer.Id = customerId;
            customer.ProfilePicture = customerFile;
            return customerId==0 ? new Response<string>(HttpStatusCode.InternalServerError,"Internal Server Error!")
                : new Response<string>(HttpStatusCode.OK, "Successfully Created Customer!") ;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine(e);
-            return new Response<string>(HttpStatusCode.InternalServerError, "An error occured");
+            return new Response<string>(HttpStatusCode.InternalServerError, ex.Message + "\n" + ex.StackTrace);
         }
     }
 

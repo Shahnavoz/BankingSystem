@@ -13,6 +13,7 @@ builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:7000");
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<ApplicationDbContext>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -32,8 +33,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
+//app.UseHttpsRedirection();
+//app.UseAuthorization();
 app.MapControllers();
 app.UseStaticFiles(
     new StaticFileOptions

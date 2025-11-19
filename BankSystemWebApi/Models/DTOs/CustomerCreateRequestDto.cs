@@ -6,4 +6,5 @@ public class CustomerCreateRequestDto
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public IFormFile ProfilePicture { get; set; }
+    //public int ProfilePictureId { get; set; }
 }

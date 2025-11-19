@@ -5,7 +5,7 @@ namespace UploadUserAvatarWebApi.Responces;
 public class Response<T>
 {
     public int StatusCode { get; set; }
-    public List<string> Descriptions { get; set; }
+    public List<string> Descriptions { get; set; } = new List<string>();
     public T Data { get; set; }
 
     public Response(HttpStatusCode statusCode, List<string> descriptions, T data)
